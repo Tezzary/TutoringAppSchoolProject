@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  db:
+    image: mysql:latest
+    ports:
+      - '3309:3306'
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=verysafetutorapppassword
+    restart: always
+  backend:
+    container_name: backend
+    build: 
+      context: ./backend
+    ports:
+      - "8000:8000"
+    restart: always
+    depends_on:
+      - db
+  frontend:
+    container_name: frontend
+    build: 
+      context: ./frontend
+    ports:
+      - "80:80"
+    restart: always
+volumes:
+  mysql-data:
