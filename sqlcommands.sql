@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS tutorsYears(
     FOREIGN KEY(tutorId) REFERENCES tutors(id) ON DELETE CASCADE
 );
 DROP TABLE tutorsSubjects;
-SELECT * FROM tutorsYears;
+SELECT * FROM tutors;
 INSERT INTO tutors(password, username, name, description, cost, educationLevel) VALUES('123', 'JanesAccount', 'Jane', 'I am a good tutor', 0, 'educationLevel');
 INSERT INTO tutorsSubjects(tutorId, subject) VALUES(1, 'Maths');
 INSERT INTO tutorsSubjects(tutorId, subject) VALUES(1, 'English');

@@ -1,9 +1,11 @@
 const cors = require('cors')
 const accounts = require('./accounts.js')
 const mysql = require("mysql2")
-const express = require('express');
-const app = express();
+const express = require('express')
+const app = express()
 const dotenv = require("dotenv")
+const jwt = require('jsonwebtoken')
+const bodyParser = require('body-parser')
 dotenv.config()
 
 const dbConfig = {
@@ -29,38 +31,22 @@ function ConnectToDB(){
 }
 ConnectToDB()
 
-
+//starting up server on port given
 const port = 8000;
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
+//cors allows us to make requests from the frontend to the backend (needed as they are served on different ports) otherwise web browsers block the request
 const corsOptions = {
     origin: ['http://localhost:3000', 'http://localhost:*', "http://localhost"],
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
+
 app.use(cors(corsOptions))
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
+app.use(express.static('public'))
 
-class Tutor {
-    constructor(name, rate, educationLevel, description, image, subjects, years) {
-        this.name = name
-        this.rate = rate
-        this.educationLevel = educationLevel
-        this.description = description
-        this.image = image
-        this.subjects = subjects
-        this.years = years
-    }
-}
 let tutors = []
-
-tutors.push(new Tutor("John", 20, "Bachelor of Science", "I am a tutor", "https://www.w3schools.com/howto/img_avatar.png", ["Maths", "English"], ["Prep-2", "5-6", "7-8", "9-10", "11-12"]))
-tutors.push(new Tutor("Jane", 30, "Bachelor of Arts", "I am a tutor", "https://www.w3schools.com/howto/img_avatar.png", ["Maths", "English"], ["Prep-2", "3-4", "5-6", "7-8", "9-10", "11-12"]))
-tutors.push(new Tutor("Jack", 40, "Bachelor of Commerce", "I am a tutor", "https://www.w3schools.com/howto/img_avatar.png", ["Maths", "English"], ["7-8", "9-10", "11-12"]))
-tutors.push(new Tutor("Jill", 50, "Bachelor of Engineering", "I am a tutor", "https://www.w3schools.com/howto/img_avatar.png", ["Maths", "English"], ["Prep-2", "3-4", "9-10", "11-12"]))
-tutors.push(new Tutor("James", 60, "Bachelor of Science", "I am a tutor", "https://www.w3schools.com/howto/img_avatar.png", ["Maths", "English"], ["Prep-2", "3-4", "5-6", "7-8", "9-10", "11-12"]))
-tutors.push(new Tutor("Jenny", 70, "Bachelor of Arts", "I am a tutor", "https://www.w3schools.com/howto/img_avatar.png", ["Maths", "English", "Japanese"], ["Prep-2", "3-4", "5-6", "7-8", "9-10", "11-12"]))
-tutors.push(new Tutor("Josh", 80, "Bachelor of Commerce", "I am a tutor", "https://www.w3schools.com/howto/img_avatar.png", ["English", "Japanese"], ["Prep-2", "3-4", "9-10", "11-12"]))
-tutors.push(new Tutor("Jade", 90, "Bachelor of Engineering", "I am a tutor", "https://www.w3schools.com/howto/img_avatar.png", ["Maths", "English", "Japanese"], ["5-6", "7-8", "9-10", "11-12"]))
-
 
 app.get('/api/search', (req, res) => {
     let selectedYear = req.query.selectedYear
@@ -87,6 +73,27 @@ app.get('/api/search', (req, res) => {
     }
     res.send({validTutors})
 })
+app.post("/login", (req, res) => {
+    let username = req.body.username
+    let password = req.body.password
+    dbConnection.query(`SELECT * FROM tutors WHERE username = '${username}' AND password = '${password}'`, (error, results) => {
+        if(error){
+            console.log(error)
+            res.json({success: false, message: "Server Error"})
+            return
+        }
+        if(results.length == 0){
+            console.log("no results")
+            res.json({success: false, message: "Invalid username or password"})
+            return
+        }
+        console.log("success")
+        let token = jwt.sign({username}, process.env.ACCESS_TOKEN_SECRET)
+        res.json({success: true, token})
+    })
+    //let response = accounts.login(dbConnection, username, password)
+    //res.send(response)
+})
 
 const tutorsQuery = `
 SELECT tutors.id, tutors.name, tutors.description, tutors.cost, tutors.educationLevel, GROUP_CONCAT(DISTINCT tutorsYears.year SEPARATOR ',') as years, GROUP_CONCAT(DISTINCT tutorsSubjects.subject SEPARATOR ',') AS subjects
@@ -104,14 +111,17 @@ function updateTutors(){
             return
         }
         for(let i = 0; i < results.length; i++){
+            //query returns the years and subjects as a string separated by commas, so we split them into arrays
             results[i].years = results[i].years.split(",")
             results[i].subjects = results[i].subjects.split(",")
+            
             tempTutors.push(results[i])
         }
         tutors = tempTutors
-        console.log(tutors)
     })
 }
+
+//automatically update tutors every 5 seconds
 setInterval(() => {
     updateTutors()
 }, 5000);
