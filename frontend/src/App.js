@@ -1,18 +1,19 @@
 import logo from './logo.svg';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
+import { FaSearch, FaArrowLeft } from 'react-icons/fa';
 import './App.css';
 
 function App() {
   const validPages = {
     searchPage: 0,
     optionsPage: 1,
-    logInPage: 2
+    logInPage: 2,
+    editProfilePage: 3
   }
-  const [selectedYear, setSelectedYear] = useState("")
-  const [selectedSubject, setSelectedSubject] = useState("")
   const [activePage, setActivePage] = useState(validPages.searchPage)
   const [validTutors, setValidTutors] = useState([])
   const [errorMessage, setErrorMessage] = useState("")
+  const [username, setUserName] = useState("")
   function searchSubmit(event){
     event.preventDefault()
     let selectedYear = event.target.elements.yearSelect.value
@@ -47,6 +48,8 @@ function App() {
     if(data.success){
       console.log("Logged In")
       window.localStorage.setItem("token", data.token)
+      setUserName(username)
+      setActivePage(validPages.editProfilePage)
     }
     else {
       setErrorMessage(data.message)
@@ -57,6 +60,7 @@ function App() {
       {activePage == validPages.searchPage ? < SearchPage searchSubmit={searchSubmit} enterLogIn={enterLogIn}/> : null}
       {activePage == validPages.optionsPage ? < OptionsPage backToSearch={backToSearch} validTutors={validTutors}/> : null}
       {activePage == validPages.logInPage ? < LogInPage backToSearch={backToSearch} submitLogIn={submitLogIn}/> : null}
+      {activePage == validPages.editProfilePage ? < EditProfilePage username={username}/> : null}
       {errorMessage != "" ? <ErrorPage errorMessage={errorMessage} disableErrorPage={() => setErrorMessage("")}/> : null}
     </div>
   );
@@ -94,13 +98,87 @@ function SearchPage({searchSubmit, enterLogIn}){
           </select>
           <div></div>
           <button>
-            <img></img>
+            <FaSearch />
           </button>
         </form>
       </div> 
       <button onClick={enterLogIn} className='LogInPageButton'>Log In</button>
     </div>
     
+  )
+}
+
+function convertToBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result.replace(/^data:.+;base64,/, ''));
+    reader.onerror = error => reject(error);
+  });
+}
+function EditProfilePage({username}){
+  const [accountData, setAccountData] = useState({imageUrl: "", name: "", year: "", cost: "", subjects: "", description: ""})
+  function readURL(event) {
+    if(event.target.files && event.target.files[0]){
+      var reader = new FileReader();
+  
+      reader.onload = function (e) {
+        let tempAccountData = {...accountData}
+        tempAccountData.imageUrl = e.target.result
+        setAccountData(tempAccountData)
+      };
+      
+      reader.readAsDataURL(event.target.files[0]);
+    }
+  }
+  async function submitChanges(event){
+    event.preventDefault()
+    let name = event.target.elements.name.value
+    let year = event.target.elements.year.value
+    let cost = event.target.elements.cost.value
+    let subjects = event.target.elements.subjects.value
+    let description = event.target.elements.description.value
+    let image = event.target.elements.image.files[0]
+    console.log(image)
+    image = await convertToBase64(image)
+    let response = await fetch(`http://localhost:8000/editProfile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+
+      },
+      body: JSON.stringify({token: window.localStorage.getItem("token"), name, year, cost, subjects, description, image})
+    })
+    let data = await response.json()
+    console.log(data)
+  }
+  function getStartingData(){
+    console.log(username)
+    fetch(`http://localhost:8000/api/getProfileData/${username}`)
+    .then(response => response.json())
+    .then(data => {
+      setAccountData(data)
+    })
+  }
+  useEffect(() => {
+    getStartingData()
+  }, [])
+  return (
+    <div className='EditProfilePage'>
+      <div>
+        <h1>Edit Profile</h1>
+        <form className='EditProfileForm' onSubmit={submitChanges}>
+          <img src={accountData.imageURL}></img>
+          <input type='file' name="image" onChange={readURL}></input>
+          <input type='text' placeholder='Name' name="name"></input>
+          <input type='text' placeholder='Year' name="year"></input>
+          <input type='number' placeholder='Cost' name="cost"></input>
+          <input type='text' placeholder='Subjects' name="subjects"></input>
+          <input type='text' placeholder='Description' name="description"></input>
+          <button type="submit">Save</button>
+        </form>
+      </div>
+    </div>
   )
 }
 function OptionsPage({backToSearch, validTutors}){
@@ -112,7 +190,7 @@ function OptionsPage({backToSearch, validTutors}){
           return (
             <Fragment>
               <div style={{display: "flex", padding: "10px", height: "150px", width: "600px"}}>
-                <img style={{aspectRatio: "1", height: "100%", borderRadius: "10px", marginRight: "20px"}} src={"http://localhost:8000/profilepictures/" + tutor.id + ".png"}></img>
+                <img style={{aspectRatio: "1", height: "100px", borderRadius: "10px", marginRight: "20px"}} src={"http://localhost:8000/profilepictures/" + tutor.id + ".png"}></img>
                 <div style={{textAlign: 'left'}}>
                   <h3>Name: {tutor.name}</h3>
                   <p>Subjects Tutored: {tutor.subjects.map((subject, index) => {
@@ -127,7 +205,7 @@ function OptionsPage({backToSearch, validTutors}){
             
           )
         })}
-        <button onClick={backToSearch} className='BackButton'>Back</button>
+        <button onClick={backToSearch} className='BackButton'><FaArrowLeft/>Back</button>
       </div>
     </div>
   )

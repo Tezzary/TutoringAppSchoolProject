@@ -18,6 +18,8 @@ services:
     restart: always
     depends_on:
       - db
+    volumes:
+      - ./backend/public/profilepictures:/app/public/profilepictures
   frontend:
     container_name: frontend
     build: 

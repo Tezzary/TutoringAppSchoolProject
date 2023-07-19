@@ -6,6 +6,11 @@ const app = express()
 const dotenv = require("dotenv")
 const jwt = require('jsonwebtoken')
 const bodyParser = require('body-parser')
+const fs = require('fs');
+const multer = require('multer');
+
+const upload = multer({ dest: 'public/profilepictures' });
+
 dotenv.config()
 
 const dbConfig = {
@@ -43,7 +48,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json())
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(express.static('public'))
 
 let tutors = []
@@ -93,6 +99,93 @@ app.post("/login", (req, res) => {
     })
     //let response = accounts.login(dbConnection, username, password)
     //res.send(response)
+})
+app.post("/editProfile", (req, res) => {
+    let token = req.body.token
+    let name = req.body.name
+    let description = req.body.description
+    let cost = req.body.cost
+    //let educationLevel = req.body.educationLevel
+    let year = req.body.year
+    let subjects = req.body.subjects
+    let imageBase64 = req.body.image
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+        if (err){
+          res.json({success: false, message: "Invalid token"})
+          return
+        }
+        let username = user.username
+        dbConnection.query(`SELECT * FROM tutors WHERE username = '${username}'`, (error, results) => {
+            if(error){
+                console.log(error)
+                res.json({success: false, message: "Server Error"})
+                return
+            }
+            if(results.length == 0){
+                console.log("no results")
+                res.json({success: false, message: "Invalid token"})
+                return
+            }
+            
+            let tutorId = results[0].id
+            fs.writeFile(`public/profilepictures/${tutorId}.png`, imageBase64, 'base64', function(err) {
+                console.log(err);
+            });
+            dbConnection.query(`UPDATE tutors SET name = '${name}', description = '${description}', cost = ${cost} WHERE id = '${tutorId}'`, (error, results) => {
+                if (error){
+                    console.log(error)
+                    res.json({success: false, message: "Server Error"})
+                    return
+                }
+                res.json({success: true, message: "Profile updated"})
+                return
+            })
+        })
+    })
+})
+app.get("/api/getProfileData/:username", (req, res) => {
+    let username = req.params.username
+    dbConnection.query(`SELECT * FROM tutors WHERE username = '${username}'`, (error, results) => {
+        if(error){
+            console.log(error)
+            res.json({success: false, message: "Server Error"})
+            return
+        }
+        if(results.length == 0){
+            console.log("no results")
+            res.json({success: false, message: "Invalid username"})
+            return
+        }
+        let tutorId = results[0].id
+        let name = results[0].name
+        let description = results[0].description
+        let cost = results[0].cost
+        let educationLevel = results[0].educationLevel
+
+        dbConnection.query(`SELECT * FROM tutorsYears WHERE tutorId = '${tutorId}'`, (error, results) => {
+            if(error){
+                console.log(error)
+                res.json({success: false, message: "Server Error"})
+                return
+            }
+            let years = []
+            for(let i = 0; i < results.length; i++){
+                years.push(results[i].year)
+            }
+            dbConnection.query(`SELECT * FROM tutorsSubjects WHERE tutorId = '${tutorId}'`, (error, results) => {
+                if(error){
+                    console.log(error)
+                    res.json({success: false, message: "Server Error"})
+                    return
+                }
+                let subjects = []
+                for(let i = 0; i < results.length; i++){
+                    subjects.push(results[i].subject)
+                }
+                res.json({success: true, name, description, cost, educationLevel, years, subjects})
+            })
+        })
+    })
 })
 
 const tutorsQuery = `
