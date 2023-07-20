@@ -106,7 +106,7 @@ app.post("/editProfile", (req, res) => {
     let description = req.body.description
     let cost = req.body.cost
     //let educationLevel = req.body.educationLevel
-    let year = req.body.year
+    let years = req.body.years
     let subjects = req.body.subjects
     let imageBase64 = req.body.image
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
@@ -128,15 +128,52 @@ app.post("/editProfile", (req, res) => {
             }
             
             let tutorId = results[0].id
-            fs.writeFile(`public/profilepictures/${tutorId}.png`, imageBase64, 'base64', function(err) {
-                console.log(err);
-            });
+            try {
+                fs.writeFile(`public/profilepictures/${tutorId}.png`, imageBase64, 'base64', function(err) {
+                    console.log(err);
+                });
+            }
+            catch(err) {
+                console.log(err)
+            }
             dbConnection.query(`UPDATE tutors SET name = '${name}', description = '${description}', cost = ${cost} WHERE id = '${tutorId}'`, (error, results) => {
                 if (error){
                     console.log(error)
                     res.json({success: false, message: "Server Error"})
                     return
                 }
+                dbConnection.query(`DELETE FROM tutorsYears WHERE tutorId = '${tutorId}'`, (error, results) => {
+                    if (error){
+                        console.log(error)
+                        res.json({success: false, message: "Server Error"})
+                        return
+                    }
+                    for(let i = 0; i < years.length; i++){
+                        dbConnection.query(`INSERT INTO tutorsYears (tutorId, year) VALUES ('${tutorId}', '${years[i]}')`, (error, results) => {
+                            if (error){
+                                console.log(error)
+                                res.json({success: false, message: "Server Error"})
+                                return
+                            }
+                        })
+                    }
+                })
+                dbConnection.query(`DELETE FROM tutorsSubjects WHERE tutorId = '${tutorId}'`, (error, results) => {
+                    if (error){
+                        console.log(error)
+                        res.json({success: false, message: "Server Error"})
+                        return
+                    }
+                    for(let i = 0; i < subjects.length; i++){
+                        dbConnection.query(`INSERT INTO tutorsSubjects (tutorId, subject) VALUES ('${tutorId}', '${subjects[i]}')`, (error, results) => {
+                            if (error){
+                                console.log(error)
+                                res.json({success: false, message: "Server Error"})
+                                return
+                            }
+                        })
+                    }
+                })
                 res.json({success: true, message: "Profile updated"})
                 return
             })

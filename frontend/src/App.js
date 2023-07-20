@@ -14,6 +14,17 @@ function App() {
   const [validTutors, setValidTutors] = useState([])
   const [errorMessage, setErrorMessage] = useState("")
   const [username, setUserName] = useState("")
+  const [validSubjects, setValidSubjects] = useState([])
+  const [validYears, setValidYears] = useState([])
+  async function getSelections(){
+    let response = await fetch("http://localhost:8000/src/availableselections.json")
+    let data = await response.json()
+    setValidSubjects(data.subjects)
+    setValidYears(data.years)
+  }
+  useEffect(() => {
+    getSelections()
+  }, [])
   function searchSubmit(event){
     event.preventDefault()
     let selectedYear = event.target.elements.yearSelect.value
@@ -57,15 +68,15 @@ function App() {
   }
   return (
     <div className="App">
-      {activePage == validPages.searchPage ? < SearchPage searchSubmit={searchSubmit} enterLogIn={enterLogIn}/> : null}
+      {activePage == validPages.searchPage ? < SearchPage searchSubmit={searchSubmit} enterLogIn={enterLogIn} validSubjects={validSubjects} validYears={validYears}/> : null}
       {activePage == validPages.optionsPage ? < OptionsPage backToSearch={backToSearch} validTutors={validTutors}/> : null}
       {activePage == validPages.logInPage ? < LogInPage backToSearch={backToSearch} submitLogIn={submitLogIn}/> : null}
-      {activePage == validPages.editProfilePage ? < EditProfilePage username={username}/> : null}
+      {activePage == validPages.editProfilePage ? < EditProfilePage username={username} validSubjects={validSubjects} validYears={validYears}/> : null}
       {errorMessage != "" ? <ErrorPage errorMessage={errorMessage} disableErrorPage={() => setErrorMessage("")}/> : null}
     </div>
   );
 }
-function SearchPage({searchSubmit, enterLogIn}){
+function SearchPage({searchSubmit, enterLogIn, validSubjects, validYears}){
   return (
     <div className='SearchPage'>
       <div >
@@ -73,28 +84,13 @@ function SearchPage({searchSubmit, enterLogIn}){
         <form onSubmit={searchSubmit} className='SearchBar'>
           <select name="yearSelect">
             <option selected disabled hidden>Year</option>
-            <option>Prep-2</option>
-            <option>3-4</option>
-            <option>5-6</option>
-            <option>7-8</option>
-            <option>9-10</option>
-            <option>11-12</option>
+            {validYears.map(year => <option>{year}</option>)}
+
           </select>
           <div></div>
           <select name="subjectSelect">
             <option selected disabled hidden>Subject</option>
-            <option>Maths</option>
-            <option>English</option>
-            <option>Science</option>
-            <option>History</option>
-            <option>Geography</option>
-            <option>French</option>
-            <option>German</option>
-            <option>Spanish</option>
-            <option>Italian</option>
-            <option>Chinese</option>
-            <option>Japanese</option>
-            <option>Indonesian</option>
+            {validSubjects.map(subject => <option>{subject}</option>)}
           </select>
           <div></div>
           <button>
@@ -116,7 +112,7 @@ function convertToBase64(file){
     reader.onerror = error => reject(error);
   });
 }
-function EditProfilePage({username}){
+function EditProfilePage({username, validYears, validSubjects}){
   const [accountData, setAccountData] = useState({imageUrl: "", name: "", year: "", cost: "", subjects: "", description: ""})
   function readURL(event) {
     if(event.target.files && event.target.files[0]){
@@ -134,20 +130,35 @@ function EditProfilePage({username}){
   async function submitChanges(event){
     event.preventDefault()
     let name = event.target.elements.name.value
-    let year = event.target.elements.year.value
     let cost = event.target.elements.cost.value
-    let subjects = event.target.elements.subjects.value
     let description = event.target.elements.description.value
+
+    let tempYears = event.target.elements.years
+    let years = []
+    for(let i = 0; i < tempYears.length; i++){
+      if(tempYears[i].checked){
+        years.push(tempYears[i].value)
+      }
+    }
+    let tempSubjects = event.target.elements.subjects
+    let subjects = []
+    for(let i = 0; i < tempSubjects.length; i++){
+      if(tempSubjects[i].checked){
+        subjects.push(tempSubjects[i].value)
+      }
+    }
     let image = event.target.elements.image.files[0]
     console.log(image)
-    image = await convertToBase64(image)
+    if(image){
+      image = await convertToBase64(image)
+    }
     let response = await fetch(`http://localhost:8000/editProfile`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
 
       },
-      body: JSON.stringify({token: window.localStorage.getItem("token"), name, year, cost, subjects, description, image})
+      body: JSON.stringify({token: window.localStorage.getItem("token"), name, years, cost, subjects, description, image})
     })
     let data = await response.json()
     console.log(data)
@@ -168,12 +179,12 @@ function EditProfilePage({username}){
       <div>
         <h1>Edit Profile</h1>
         <form className='EditProfileForm' onSubmit={submitChanges}>
-          <img src={accountData.imageURL}></img>
+          <img src={accountData.imageUrl}></img>
           <input type='file' name="image" onChange={readURL}></input>
           <input type='text' placeholder='Name' name="name"></input>
-          <input type='text' placeholder='Year' name="year"></input>
+          {validYears.map(year => <input type='checkbox' name="years" value={year}></input>)}
+          {validSubjects.map(subject => <input type='checkbox' name="subjects" value={subject}></input>)}
           <input type='number' placeholder='Cost' name="cost"></input>
-          <input type='text' placeholder='Subjects' name="subjects"></input>
           <input type='text' placeholder='Description' name="description"></input>
           <button type="submit">Save</button>
         </form>
