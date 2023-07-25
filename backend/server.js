@@ -61,16 +61,20 @@ app.get('/api/search', (req, res) => {
     for(let i = 0; i < tutors.length; i++){
         let validYear = false
         let validSubject = false
-        for(let j = 0; j < tutors[i].years.length; j++){
-            if(tutors[i].years[j] === selectedYear){
-                validYear = true
-                break
+        if(tutors[i].years){
+            for(let j = 0; j < tutors[i].years.length; j++){
+                if(tutors[i].years[j] === selectedYear){
+                    validYear = true
+                    break
+                }
             }
         }
-        for(let j = 0; j < tutors[i].subjects.length; j++){
-            if(tutors[i].subjects[j] === selectedSubject){
-                validSubject = true
-                break
+        if(tutors[i].subjects){
+            for(let j = 0; j < tutors[i].subjects.length; j++){
+                if(tutors[i].subjects[j] === selectedSubject){
+                    validSubject = true
+                    break
+                }
             }
         }
         if(validYear && validSubject){
@@ -148,6 +152,7 @@ app.post("/editProfile", (req, res) => {
                         res.json({success: false, message: "Server Error"})
                         return
                     }
+                    console.log(years)
                     for(let i = 0; i < years.length; i++){
                         dbConnection.query(`INSERT INTO tutorsYears (tutorId, year) VALUES ('${tutorId}', '${years[i]}')`, (error, results) => {
                             if (error){
@@ -219,7 +224,7 @@ app.get("/api/getProfileData/:username", (req, res) => {
                 for(let i = 0; i < results.length; i++){
                     subjects.push(results[i].subject)
                 }
-                res.json({success: true, name, description, cost, educationLevel, years, subjects})
+                res.json({success: true, imageUrl: `http://localhost:8000/profilepictures/${tutorId}.png`, name, description, cost, educationLevel, years, subjects})
             })
         })
     })
@@ -242,9 +247,12 @@ function updateTutors(){
         }
         for(let i = 0; i < results.length; i++){
             //query returns the years and subjects as a string separated by commas, so we split them into arrays
-            results[i].years = results[i].years.split(",")
-            results[i].subjects = results[i].subjects.split(",")
-            
+            if(results[i].years){
+                results[i].years = results[i].years.split(",")
+            }
+            if(results[i].subjects){
+                results[i].subjects = results[i].subjects.split(",")
+            }
             tempTutors.push(results[i])
         }
         tutors = tempTutors

@@ -113,7 +113,7 @@ function convertToBase64(file){
   });
 }
 function EditProfilePage({username, validYears, validSubjects}){
-  const [accountData, setAccountData] = useState({imageUrl: "", name: "", year: "", cost: "", subjects: "", description: ""})
+  const [accountData, setAccountData] = useState({imageUrl: "", name: "", years: [], subjects: [], cost: 0, description: ""})
   function readURL(event) {
     if(event.target.files && event.target.files[0]){
       var reader = new FileReader();
@@ -148,7 +148,6 @@ function EditProfilePage({username, validYears, validSubjects}){
       }
     }
     let image = event.target.elements.image.files[0]
-    console.log(image)
     if(image){
       image = await convertToBase64(image)
     }
@@ -168,8 +167,16 @@ function EditProfilePage({username, validYears, validSubjects}){
     fetch(`http://localhost:8000/api/getProfileData/${username}`)
     .then(response => response.json())
     .then(data => {
+      console.log(data.cost)
+      console.log(typeof(data.cost))
       setAccountData(data)
     })
+  }
+  //some sort of bug with react where you cant set default value of number input so this work around is needed to update the cost field using value instead of defaultValue
+  function costUpdated(event){
+    let tempAccountData = {...accountData}
+    tempAccountData.cost = event.target.value
+    setAccountData(tempAccountData)
   }
   useEffect(() => {
     getStartingData()
@@ -179,13 +186,26 @@ function EditProfilePage({username, validYears, validSubjects}){
       <div>
         <h1>Edit Profile</h1>
         <form className='EditProfileForm' onSubmit={submitChanges}>
-          <img src={accountData.imageUrl}></img>
-          <input type='file' name="image" onChange={readURL}></input>
-          <input type='text' placeholder='Name' name="name"></input>
-          {validYears.map(year => <input type='checkbox' name="years" value={year}></input>)}
-          {validSubjects.map(subject => <input type='checkbox' name="subjects" value={subject}></input>)}
-          <input type='number' placeholder='Cost' name="cost"></input>
-          <input type='text' placeholder='Description' name="description"></input>
+          <div className='Flex'>
+            <img className='ProfilePicture' src={accountData.imageUrl}></img>
+            <input type='file' name="image" accept="image/*" onChange={readURL} style={{color: "transparent", width: "90px"}}></input>
+            <label>Use image with 1:1 aspect ratio to avoid stretching</label>
+          </div>
+          
+          <input type='text' placeholder='Name' name="name" defaultValue={accountData.name}></input>
+          <div className='EditProfileSubjectYearParent'>
+            <div>
+              <h4>Years Tutored:</h4>
+              {validYears.map(year => <div><label>{year}</label><input defaultChecked={accountData.years.find(yearName => year == yearName)} type='checkbox' name="years" value={year}></input></div>)}
+            </div>
+            <div>
+              <h4>Subjects Tutored:</h4>
+              {validSubjects.map(subject =><div><label>{subject}</label><input defaultChecked={accountData.subjects.find(subjectName => subject == subjectName)} type='checkbox' name="subjects" value={subject}></input></div>)}
+            </div>
+          </div>
+          
+          <input type='number' placeholder='Cost' name="cost" value={accountData.cost} onChange={costUpdated}></input>
+          <input type='text' placeholder='Description' name="description" defaultValue={accountData.description}></input>
           <button type="submit">Save</button>
         </form>
       </div>
@@ -201,7 +221,7 @@ function OptionsPage({backToSearch, validTutors}){
           return (
             <Fragment>
               <div style={{display: "flex", padding: "10px", height: "150px", width: "600px"}}>
-                <img style={{aspectRatio: "1", height: "100px", borderRadius: "10px", marginRight: "20px"}} src={"http://localhost:8000/profilepictures/" + tutor.id + ".png"}></img>
+                <img className='ProfilePicture' src={"http://localhost:8000/profilepictures/" + tutor.id + ".png"}></img>
                 <div style={{textAlign: 'left'}}>
                   <h3>Name: {tutor.name}</h3>
                   <p>Subjects Tutored: {tutor.subjects.map((subject, index) => {

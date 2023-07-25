@@ -124,3 +124,23 @@ h3 {
   align-items: center;
   justify-content: center;
 }
+.EditProfileForm {
+  
+}
+.EditProfileSubjectYearParent{
+  display: flex;
+}
+.EditProfileSubjectYearParent > div {
+  padding: 10px;
+}
+.ProfilePicture{
+  aspect-ratio: 1/1;
+  height: 100px;
+  border-radius: 10px;
+  margin-right: 20px;
+}
+.Flex{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
