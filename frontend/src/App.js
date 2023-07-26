@@ -8,7 +8,8 @@ function App() {
     searchPage: 0,
     optionsPage: 1,
     logInPage: 2,
-    editProfilePage: 3
+    editProfilePage: 3,
+    fullProfileView: 4,
   }
   const [activePage, setActivePage] = useState(validPages.searchPage)
   const [validTutors, setValidTutors] = useState([])
@@ -16,6 +17,8 @@ function App() {
   const [username, setUserName] = useState("")
   const [validSubjects, setValidSubjects] = useState([])
   const [validYears, setValidYears] = useState([])
+  const [selectedTutor, setSelectedTutor] = useState({})
+  const [registering, setRegistering] = useState(false)
   async function getSelections(){
     let response = await fetch("http://localhost:8000/src/availableselections.json")
     let data = await response.json()
@@ -47,7 +50,7 @@ function App() {
     let username = event.target.elements.username.value
     let password = event.target.elements.password.value
     console.log(username, password)
-    let response = await fetch(`http://localhost:8000/login`, {
+    let response = await fetch(`http://localhost:8000/${registering ? "register" : "login"}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -66,15 +69,21 @@ function App() {
       setErrorMessage(data.message)
     }
   }
+  function fullProfileView(tutor){
+    console.log(tutor)
+    setSelectedTutor(tutor)
+    setActivePage(validPages.fullProfileView)
+  }
   return (
     <div className="App">
       {activePage == validPages.searchPage ? < SearchPage searchSubmit={searchSubmit} enterLogIn={enterLogIn} validSubjects={validSubjects} validYears={validYears}/> : null}
-      {activePage == validPages.optionsPage ? < OptionsPage backToSearch={backToSearch} validTutors={validTutors}/> : null}
-      {activePage == validPages.logInPage ? < LogInPage backToSearch={backToSearch} submitLogIn={submitLogIn}/> : null}
+      {activePage == validPages.optionsPage ? < OptionsPage backToSearch={backToSearch} validTutors={validTutors} fullProfileView={fullProfileView}/> : null}
+      {activePage == validPages.logInPage ? < LogInPage backToSearch={backToSearch} submitLogIn={submitLogIn} registering={registering} setRegistering={setRegistering}/> : null}
       {activePage == validPages.editProfilePage ? < EditProfilePage username={username} validSubjects={validSubjects} validYears={validYears}/> : null}
+      {activePage == validPages.fullProfileView ? < FullProfileView backToSearch={backToSearch} tutor={selectedTutor}/> : null}
       {errorMessage != "" ? <ErrorPage errorMessage={errorMessage} disableErrorPage={() => setErrorMessage("")}/> : null}
     </div>
-  );
+  )
 }
 function SearchPage({searchSubmit, enterLogIn, validSubjects, validYears}){
   return (
@@ -184,8 +193,8 @@ function EditProfilePage({username, validYears, validSubjects}){
   return (
     <div className='EditProfilePage'>
       <div>
-        <h1>Edit Profile</h1>
         <form className='EditProfileForm' onSubmit={submitChanges}>
+          <h1>Edit Profile</h1>
           <div className='Flex'>
             <img className='ProfilePicture' src={accountData.imageUrl}></img>
             <input type='file' name="image" accept="image/*" onChange={readURL} style={{color: "transparent", width: "90px"}}></input>
@@ -212,7 +221,7 @@ function EditProfilePage({username, validYears, validSubjects}){
     </div>
   )
 }
-function OptionsPage({backToSearch, validTutors}){
+function OptionsPage({backToSearch, validTutors, fullProfileView}){
   return (
     <div className='OptionsPage'>
       <div>
@@ -220,7 +229,7 @@ function OptionsPage({backToSearch, validTutors}){
         {validTutors.map(tutor => {
           return (
             <Fragment>
-              <div style={{display: "flex", padding: "10px", height: "150px", width: "600px"}}>
+              <div style={{display: "flex", padding: "10px", height: "150px", width: "600px"}} onClick={() => fullProfileView(tutor)}>
                 <img className='ProfilePicture' src={"http://localhost:8000/profilepictures/" + tutor.id + ".png"}></img>
                 <div style={{textAlign: 'left'}}>
                   <h3>Name: {tutor.name}</h3>
@@ -241,7 +250,8 @@ function OptionsPage({backToSearch, validTutors}){
     </div>
   )
 }
-function LogInPage({backToSearch, submitLogIn, registering}){
+function LogInPage({backToSearch, submitLogIn, registering, setRegistering}){
+
   return (
     <div className='LogInPage'>
       <div>
@@ -249,8 +259,9 @@ function LogInPage({backToSearch, submitLogIn, registering}){
         <form onSubmit={submitLogIn}>
           <input type='text' placeholder='Username' name='username'></input>
           <input type='password' placeholder='Password' name='password'></input>
-          <button type="submit">Log In</button>
+          <button type="submit">{registering ? "Register" : "Log In"}</button>
         </form>
+        <button onClick={() => setRegistering(!registering)}>{registering ? "Log In Instead" : "Register Instead"}</button>
       </div>
       <button onClick={backToSearch} className='BackButton'>Back</button>
     </div>
@@ -264,7 +275,25 @@ function ErrorPage({errorMessage, disableErrorPage}){
         <p>{errorMessage}</p>
         <button onClick={disableErrorPage}>Back</button>
       </div>
-      
+    </div>
+  )
+}
+function FullProfileView({backToSearch, tutor}){
+  return (
+    <div className='FullProfileView'>
+      <div className='Flex Column'>
+        <h1>{tutor.name}</h1>
+        <img className='ProfilePicture' src={"http://localhost:8000/profilepictures/" + tutor.id + ".png"}></img>
+        <h3>Years Tutored: {tutor.years.map((year, index) => {
+          return (`${year}${index != tutor.years.length - 1 ? ", " : ""}`)
+        })}</h3>
+        <h3>Subjects Tutored: {tutor.subjects.map((subject, index) => {
+          return (`${subject}${index != tutor.subjects.length - 1 ? ", " : ""}`)
+        })}</h3>
+        <h3>Cost: ${tutor.cost}</h3>
+        <p>{tutor.description}</p>
+        <button onClick={backToSearch} className='BackButton'>Back</button>
+      </div>
     </div>
   )
 }

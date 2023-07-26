@@ -104,6 +104,59 @@ app.post("/login", (req, res) => {
     //let response = accounts.login(dbConnection, username, password)
     //res.send(response)
 })
+app.post("/register", (req, res) => {
+    let username = req.body.username
+    let password = req.body.password
+
+    dbConnection.query(`SELECT * FROM tutors WHERE username = '${username}'`, (error, results) => {
+        if(error){
+            console.log(error)
+            res.json({success: false, message: "Server Error"})
+            return
+        }
+        if(results.length > 0){
+            console.log("username taken")
+            res.json({success: false, message: "Username taken"})
+            return
+        }
+        dbConnection.query(`INSERT INTO tutors (username, password, name, description, educationLevel, cost) VALUES ('${username}', '${password}', '${username}', 'Hi my name is ${username} and I am a tutor!', '', 0)`, (error, results) => {
+
+            if(error){
+                console.log(error)
+                res.json({success: false, message: "Server Error"})
+                return
+            }
+            console.log("success")
+            dbConnection.query(`SELECT * FROM tutors WHERE username = '${username}'`, (error, results) => {
+                if(error){
+                    console.log(error)
+                    res.json({success: false, message: "Server Error"})
+                    return
+                }
+                if(results.length == 0){
+                    console.log("no results")
+                    res.json({success: false, message: "Server Error"})
+                    return
+                }
+                let tutorId = results[0].id
+                try {
+                    //grab the base profile picture at profilepictures/0.png and copy it to the new tutor's profile picture
+                    fs.copyFile('public/profilepictures/0.png', `public/profilepictures/${tutorId}.png`, (err) => {
+                        if (err) throw err;
+                        console.log('source.txt was copied to destination.txt');
+                    });
+                    let token = jwt.sign({username}, process.env.ACCESS_TOKEN_SECRET)
+                    res.json({success: true, token})
+                }
+                catch(err) {
+                    console.log(err)
+                    let token = jwt.sign({username}, process.env.ACCESS_TOKEN_SECRET)
+                    res.json({success: true, token})
+                }
+            })
+        })
+    })
+})
 app.post("/editProfile", (req, res) => {
     let token = req.body.token
     let name = req.body.name
@@ -231,7 +284,7 @@ app.get("/api/getProfileData/:username", (req, res) => {
 })
 
 const tutorsQuery = `
-SELECT tutors.id, tutors.name, tutors.description, tutors.cost, tutors.educationLevel, GROUP_CONCAT(DISTINCT tutorsYears.year SEPARATOR ',') as years, GROUP_CONCAT(DISTINCT tutorsSubjects.subject SEPARATOR ',') AS subjects
+SELECT tutors.id, tutors.username, tutors.name, tutors.description, tutors.cost, tutors.educationLevel, GROUP_CONCAT(DISTINCT tutorsYears.year SEPARATOR ',') as years, GROUP_CONCAT(DISTINCT tutorsSubjects.subject SEPARATOR ',') AS subjects
 FROM tutors
 LEFT JOIN tutorsSubjects ON tutors.id = tutorsSubjects.tutorId
 LEFT JOIN tutorsYears ON tutors.id = tutorsYears.tutorId

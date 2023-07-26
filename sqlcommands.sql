@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS tutorsYears(
 );
 DROP TABLE tutorsSubjects;
 SELECT * FROM tutors;
+DELETE FROM tutors WHERE username = "BobsAccount";
 INSERT INTO tutors(password, username, name, description, cost, educationLevel) VALUES('123', 'JanesAccount', 'Jane', 'I am a good tutor', 0, 'educationLevel');
 INSERT INTO tutorsSubjects(tutorId, subject) VALUES(1, 'Maths');
 INSERT INTO tutorsSubjects(tutorId, subject) VALUES(1, 'English');
