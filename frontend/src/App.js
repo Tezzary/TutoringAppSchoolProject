@@ -1,9 +1,12 @@
-import logo from './logo.svg';
+import logo from './logo.png';
+import photoOfMe from './me.png';
 import { Fragment, useEffect, useState } from 'react';
 import { FaSearch, FaArrowLeft } from 'react-icons/fa';
 import './App.css';
 
 function App() {
+
+  //stores 
   const validPages = {
     searchPage: 0,
     optionsPage: 1,
@@ -85,11 +88,25 @@ function App() {
     </div>
   )
 }
+function LogoDisplay(){
+  return (
+    <div className='Flex LogoDisplay'>
+      <div ></div>
+      <img src={logo} className="SiteLogo" alt="logo" />
+      <div></div>
+    </div>
+  )
+}
 function SearchPage({searchSubmit, enterLogIn, validSubjects, validYears}){
   return (
     <div className='SearchPage'>
-      <div >
-        <h1>Tutoring App</h1>
+      <div className='Flex Column'>
+        <div className='Flex'>
+          
+          {/*<img src={photoOfMe} className="PhotoOfMe" alt="photoOfMe" />*/}
+        </div>
+        <LogoDisplay />
+        <h2>Star Tutors Is The Fastest And Easiest Way to Find Quality and Experienced Tutors For<br></br> Primary and High School Aged Students In All Subjects</h2>
         <form onSubmit={searchSubmit} className='SearchBar'>
           <select name="yearSelect">
             <option selected disabled hidden>Year</option>
@@ -190,6 +207,7 @@ function EditProfilePage({username, validYears, validSubjects}){
   useEffect(() => {
     getStartingData()
   }, [])
+
   return (
     <div className='EditProfilePage'>
       <div>
@@ -213,8 +231,15 @@ function EditProfilePage({username, validYears, validSubjects}){
             </div>
           </div>
           
-          <input type='number' placeholder='Cost' name="cost" value={accountData.cost} onChange={costUpdated}></input>
-          <input type='text' placeholder='Description' name="description" defaultValue={accountData.description}></input>
+          <div className='Flex'>
+            <div>Cost: $</div>
+            <input type='number' placeholder='Cost' name="cost" value={accountData.cost} onChange={costUpdated}></input>
+          </div>
+          <div className='Flex'>
+            <div>Description:</div>
+            <input type='text' placeholder='Description' name="description" defaultValue={accountData.description}></input>
+          </div>
+          
           <button type="submit">Save</button>
         </form>
       </div>
@@ -256,12 +281,13 @@ function LogInPage({backToSearch, submitLogIn, registering, setRegistering}){
     <div className='LogInPage'>
       <div>
         <h1>Log In</h1>
-        <form onSubmit={submitLogIn}>
+        <form onSubmit={submitLogIn} className='LoginForm'>
           <input type='text' placeholder='Username' name='username'></input>
           <input type='password' placeholder='Password' name='password'></input>
           <button type="submit">{registering ? "Register" : "Log In"}</button>
+          <button type="button" onClick={() => setRegistering(!registering)}>{registering ? "Log In Instead" : "Register Instead"}</button>
         </form>
-        <button onClick={() => setRegistering(!registering)}>{registering ? "Log In Instead" : "Register Instead"}</button>
+        
       </div>
       <button onClick={backToSearch} className='BackButton'>Back</button>
     </div>
