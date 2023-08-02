@@ -6,7 +6,7 @@ import './App.css';
 
 function App() {
 
-  //stores 
+  //Enum of all valid pages that can be displayed in the program to simplify changing between pages
   const validPages = {
     searchPage: 0,
     optionsPage: 1,
@@ -14,6 +14,7 @@ function App() {
     editProfilePage: 3,
     fullProfileView: 4,
   }
+  //defining variables to be used and updated throughout the program
   const [activePage, setActivePage] = useState(validPages.searchPage)
   const [validTutors, setValidTutors] = useState([])
   const [errorMessage, setErrorMessage] = useState("")
@@ -22,15 +23,20 @@ function App() {
   const [validYears, setValidYears] = useState([])
   const [selectedTutor, setSelectedTutor] = useState({})
   const [registering, setRegistering] = useState(false)
+
+  //function to get the valid subjects and years from the server
   async function getSelections(){
     let response = await fetch("http://localhost:8000/src/availableselections.json")
     let data = await response.json()
     setValidSubjects(data.subjects)
     setValidYears(data.years)
   }
+  //useeffect runs on program start to query valid subjects and years from the server
   useEffect(() => {
     getSelections()
   }, [])
+
+  //function to handle the search submit event to get tutors fitting criteria
   function searchSubmit(event){
     event.preventDefault()
     let selectedYear = event.target.elements.yearSelect.value
@@ -42,17 +48,19 @@ function App() {
       setValidTutors(data.validTutors)
     })
   }
+  //function to handle the back button being pressed to return to the search page
   function backToSearch(){
     setActivePage(validPages.searchPage)
   }
+  //function to handle the log in button being pressed to enter the log in page
   function enterLogIn(){
     setActivePage(validPages.logInPage)
   }
+  //function to handle the log in form being submitted and handle the response from the server
   async function submitLogIn(event){
     event.preventDefault()
     let username = event.target.elements.username.value
     let password = event.target.elements.password.value
-    console.log(username, password)
     let response = await fetch(`http://localhost:8000/${registering ? "register" : "login"}`, {
       method: 'POST',
       headers: {
@@ -61,9 +69,7 @@ function App() {
       body: JSON.stringify({username, password})
     })
     let data = await response.json()
-    console.log(data)
     if(data.success){
-      console.log("Logged In")
       window.localStorage.setItem("token", data.token)
       setUserName(username)
       setActivePage(validPages.editProfilePage)
@@ -72,11 +78,13 @@ function App() {
       setErrorMessage(data.message)
     }
   }
+  //function to handle the full profile view button being pressed to enter the full profile view page and show more information about a tutor
   function fullProfileView(tutor){
     console.log(tutor)
     setSelectedTutor(tutor)
     setActivePage(validPages.fullProfileView)
   }
+  //html this function needs to render being all of the sites pages conditionally based on activePage
   return (
     <div className="App">
       {activePage == validPages.searchPage ? < SearchPage searchSubmit={searchSubmit} enterLogIn={enterLogIn} validSubjects={validSubjects} validYears={validYears}/> : null}
@@ -88,15 +96,18 @@ function App() {
     </div>
   )
 }
+
+//Logo display function displays the logo and the two divs on either side of it called in html of most pages to render logo at top of page
 function LogoDisplay(){
   return (
     <div className='Flex LogoDisplay'>
-      <div ></div>
+      <div className='LeftDiv'></div>
       <img src={logo} className="SiteLogo" alt="logo" />
-      <div></div>
+      <div className='RightDiv'> </div>
     </div>
   )
 }
+//Search page to 
 function SearchPage({searchSubmit, enterLogIn, validSubjects, validYears}){
   return (
     <div className='SearchPage'>
@@ -212,7 +223,7 @@ function EditProfilePage({username, validYears, validSubjects}){
     <div className='EditProfilePage'>
       <div>
         <form className='EditProfileForm' onSubmit={submitChanges}>
-          <h1>Edit Profile</h1>
+          <LogoDisplay />
           <div className='Flex'>
             <img className='ProfilePicture' src={accountData.imageUrl}></img>
             <input type='file' name="image" accept="image/*" onChange={readURL} style={{color: "transparent", width: "90px"}}></input>
@@ -248,15 +259,16 @@ function EditProfilePage({username, validYears, validSubjects}){
 }
 function OptionsPage({backToSearch, validTutors, fullProfileView}){
   return (
-    <div className='OptionsPage'>
-      <div>
-        <h1>Tutoring App</h1>
+    <div className='OptionsPage Column'>
+      < LogoDisplay />
+      <div className='Flex Column'>
+        
         {validTutors.map(tutor => {
           return (
             <Fragment>
               <div style={{display: "flex", padding: "10px", height: "150px", width: "600px"}} onClick={() => fullProfileView(tutor)}>
                 <img className='ProfilePicture' src={"http://localhost:8000/profilepictures/" + tutor.id + ".png"}></img>
-                <div style={{textAlign: 'left'}}>
+                <div style={{textAlign: 'left', marginLeft: "10px"}}>
                   <h3>Name: {tutor.name}</h3>
                   <p>Subjects Tutored: {tutor.subjects.map((subject, index) => {
                     return (`${subject}${index != tutor.subjects.length - 1 ? ", " : ""}`)
@@ -278,10 +290,11 @@ function OptionsPage({backToSearch, validTutors, fullProfileView}){
 function LogInPage({backToSearch, submitLogIn, registering, setRegistering}){
 
   return (
-    <div className='LogInPage'>
-      <div>
-        <h1>Log In</h1>
+    <div className='LogInPage Column Flex'>
+      < LogoDisplay />
+      <div style={{width: "500px"}}>
         <form onSubmit={submitLogIn} className='LoginForm'>
+          <h2>Log In</h2>
           <input type='text' placeholder='Username' name='username'></input>
           <input type='password' placeholder='Password' name='password'></input>
           <button type="submit">{registering ? "Register" : "Log In"}</button>

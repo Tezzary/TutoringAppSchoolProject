@@ -1,8 +1,14 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
 :root {
-  --darkSiteColour: #555555;
-  --secondaryLightColour: #959595;
+  --darkSiteColour: #999999;
+  --secondaryLightColour: #BBBBBB;
   --lightSiteColour: #AAAAAA;
-  --secondarySiteColour: #78BE21 ;
+  --secondarySiteColour: #78BE21;
+  --orangeColour: #FF9900;
   /*
   Orange: #FF9900
   */
@@ -146,7 +152,6 @@ h3 {
   aspect-ratio: 1/1;
   height: 150px;
   border-radius: 10px;
-  margin-right: 20px;
 }
 .Flex{
   display: flex;
@@ -195,12 +200,28 @@ h3 {
   width: 400px;
 }
 .LogoDisplay > div{
-  background-color: red;
+  background-color: var(--orangeColour);
   width: 100%;
   height: 100px;
-  border-radius: 25px;
-  margin: 10px;
+  
+}
+.LeftDiv {
+  border-top-right-radius: 25px;
+  border-bottom-right-radius: 25px;
+  margin-right: 10px;
+}
+.RightDiv {
+  border-top-left-radius: 25px;
+  border-bottom-left-radius: 25px;
+  margin-left: 10px;
 }
 .LogoDisplay{
-  width: 120vw;
+  width: 100vw;
+  overflow-x: hidden;
+}
+hr {
+  width: 600px;
+  border: 0;
+  height: 1px;
+  background-color: var(--darkSiteColour);
 }
