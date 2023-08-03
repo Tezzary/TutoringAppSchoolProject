@@ -225,3 +225,16 @@ hr {
   height: 1px;
   background-color: var(--darkSiteColour);
 }
+.VerticalRule {
+  margin: 20px;
+  width: 5px;
+  border: 0;
+  height: 320px;
+  background-color: var(--darkSiteColour);
+}
+.EditProfileParent {
+  background-color: #DDDDDD;
+  padding: 10px;
+  border-radius: 35px;
+  color: black;
+}

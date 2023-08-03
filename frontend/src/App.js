@@ -224,32 +224,41 @@ function EditProfilePage({username, validYears, validSubjects}){
       <div>
         <form className='EditProfileForm' onSubmit={submitChanges}>
           <LogoDisplay />
-          <div className='Flex'>
-            <img className='ProfilePicture' src={accountData.imageUrl}></img>
-            <input type='file' name="image" accept="image/*" onChange={readURL} style={{color: "transparent", width: "90px"}}></input>
-            <label>Use image with 1:1 aspect ratio to avoid stretching</label>
+          <div className='Flex EditProfileParent'>
+            <div className='Flex Column'>
+              <img className='ProfilePicture' src={accountData.imageUrl}></img>
+              <input type='file' name="image" accept="image/*" onChange={readURL} style={{color: "transparent", width: "90px"}}></input>
+              <label>Use image with 1:1 aspect ratio to avoid stretching</label>
+            </div>
+            <div className='VerticalRule'></div>
+            <div className='Flex Column'>
+              <div className=''>
+                <div>Name: </div>
+                <input type='text' placeholder='Name' name="name" defaultValue={accountData.name}></input>
+              </div>
+              <div className=''>
+                <div>Cost: $</div>
+                <input type='number' placeholder='Cost' name="cost" value={accountData.cost} onChange={costUpdated}></input>
+              </div>
+              <div className=''>
+                <div>Description:</div>
+                <input type='text' placeholder='Description' name="description" defaultValue={accountData.description}></input>
+              </div>
+            </div>
+            <div className='VerticalRule'></div>
+            <div className='EditProfileSubjectYearParent'>
+              <div>
+                <h4>Years Tutored:</h4>
+                {validYears.map(year => <div><label>{year}</label><input defaultChecked={accountData.years.find(yearName => year == yearName)} type='checkbox' name="years" value={year}></input></div>)}
+              </div>
+              <div>
+                <h4>Subjects Tutored:</h4>
+                {validSubjects.map(subject =><div><label>{subject}</label><input defaultChecked={accountData.subjects.find(subjectName => subject == subjectName)} type='checkbox' name="subjects" value={subject}></input></div>)}
+              </div>
+            </div>
+            
           </div>
           
-          <input type='text' placeholder='Name' name="name" defaultValue={accountData.name}></input>
-          <div className='EditProfileSubjectYearParent'>
-            <div>
-              <h4>Years Tutored:</h4>
-              {validYears.map(year => <div><label>{year}</label><input defaultChecked={accountData.years.find(yearName => year == yearName)} type='checkbox' name="years" value={year}></input></div>)}
-            </div>
-            <div>
-              <h4>Subjects Tutored:</h4>
-              {validSubjects.map(subject =><div><label>{subject}</label><input defaultChecked={accountData.subjects.find(subjectName => subject == subjectName)} type='checkbox' name="subjects" value={subject}></input></div>)}
-            </div>
-          </div>
-          
-          <div className='Flex'>
-            <div>Cost: $</div>
-            <input type='number' placeholder='Cost' name="cost" value={accountData.cost} onChange={costUpdated}></input>
-          </div>
-          <div className='Flex'>
-            <div>Description:</div>
-            <input type='text' placeholder='Description' name="description" defaultValue={accountData.description}></input>
-          </div>
           
           <button type="submit">Save</button>
         </form>
