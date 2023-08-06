@@ -169,7 +169,7 @@ function EditProfilePage({username, validYears, validSubjects}){
     let name = event.target.elements.name.value
     let cost = event.target.elements.cost.value
     let description = event.target.elements.description.value
-
+    let contactInformation = event.target.elements.contactInformation.value
     let tempYears = event.target.elements.years
     let years = []
     for(let i = 0; i < tempYears.length; i++){
@@ -228,7 +228,7 @@ function EditProfilePage({username, validYears, validSubjects}){
             <div className='Flex Column'>
               <img className='ProfilePicture' src={accountData.imageUrl}></img>
               <input type='file' name="image" accept="image/*" onChange={readURL} style={{color: "transparent", width: "90px"}}></input>
-              <label>Use image with 1:1 aspect ratio to avoid stretching</label>
+              <label style={{textAlign: "center"}}>Use image with equal width & <br></br>height to avoid stretching</label>
             </div>
             <div className='VerticalRule'></div>
             <div className='Flex Column'>
@@ -243,6 +243,10 @@ function EditProfilePage({username, validYears, validSubjects}){
               <div className=''>
                 <div>Description:</div>
                 <input type='text' placeholder='Description' name="description" defaultValue={accountData.description}></input>
+              </div>
+              <div className=''>
+                <div>Contact Information:</div>
+                <input type='text' placeholder='Contact Information' name="contactInformation" defaultValue={accountData.contactInformation}></input>
               </div>
             </div>
             <div className='VerticalRule'></div>
@@ -339,6 +343,7 @@ function FullProfileView({backToSearch, tutor}){
           return (`${subject}${index != tutor.subjects.length - 1 ? ", " : ""}`)
         })}</h3>
         <h3>Cost: ${tutor.cost}</h3>
+        <h3>Contact Information: {tutor.contactInformation}</h3>
         <p>{tutor.description}</p>
         <button onClick={backToSearch} className='BackButton'>Back</button>
       </div>

@@ -119,7 +119,7 @@ app.post("/register", (req, res) => {
             res.json({success: false, message: "Username taken"})
             return
         }
-        dbConnection.query(`INSERT INTO tutors (username, password, name, description, educationLevel, cost) VALUES ('${username}', '${password}', '${username}', 'Hi my name is ${username} and I am a tutor!', '', 0)`, (error, results) => {
+        dbConnection.query(`INSERT INTO tutors (username, password, name, description, cost, contactInformation) VALUES ('${username}', '${password}', '${username}', 'Hi my name is ${username} and I am a tutor!', 0, '')`, (error, results) => {
 
             if(error){
                 console.log(error)
@@ -162,7 +162,6 @@ app.post("/editProfile", (req, res) => {
     let name = req.body.name
     let description = req.body.description
     let cost = req.body.cost
-    //let educationLevel = req.body.educationLevel
     let years = req.body.years
     let subjects = req.body.subjects
     let imageBase64 = req.body.image
@@ -255,7 +254,7 @@ app.get("/api/getProfileData/:username", (req, res) => {
         let name = results[0].name
         let description = results[0].description
         let cost = results[0].cost
-        let educationLevel = results[0].educationLevel
+        let contactInformation = results[0].contactInformation
 
         dbConnection.query(`SELECT * FROM tutorsYears WHERE tutorId = '${tutorId}'`, (error, results) => {
             if(error){
@@ -277,14 +276,14 @@ app.get("/api/getProfileData/:username", (req, res) => {
                 for(let i = 0; i < results.length; i++){
                     subjects.push(results[i].subject)
                 }
-                res.json({success: true, imageUrl: `http://localhost:8000/profilepictures/${tutorId}.png`, name, description, cost, educationLevel, years, subjects})
+                res.json({success: true, imageUrl: `http://localhost:8000/profilepictures/${tutorId}.png`, name, description, cost, contactInformation, years, subjects})
             })
         })
     })
 })
 
 const tutorsQuery = `
-SELECT tutors.id, tutors.username, tutors.name, tutors.description, tutors.cost, tutors.educationLevel, GROUP_CONCAT(DISTINCT tutorsYears.year SEPARATOR ',') as years, GROUP_CONCAT(DISTINCT tutorsSubjects.subject SEPARATOR ',') AS subjects
+SELECT tutors.id, tutors.username, tutors.name, tutors.description, tutors.cost, tutor.contactInformation, GROUP_CONCAT(DISTINCT tutorsYears.year SEPARATOR ',') as years, GROUP_CONCAT(DISTINCT tutorsSubjects.subject SEPARATOR ',') AS subjects
 FROM tutors
 LEFT JOIN tutorsSubjects ON tutors.id = tutorsSubjects.tutorId
 LEFT JOIN tutorsYears ON tutors.id = tutorsYears.tutorId

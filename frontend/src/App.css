@@ -228,13 +228,14 @@ hr {
 .VerticalRule {
   margin: 20px;
   width: 5px;
-  border: 0;
+  border: 1px solid black;
+  border-radius: 100px;
   height: 320px;
-  background-color: var(--darkSiteColour);
+  background-color: var(--orangeColour);
 }
 .EditProfileParent {
-  background-color: #DDDDDD;
+  background-color: var(--secondarySiteColour);
   padding: 10px;
   border-radius: 35px;
-  color: black;
+  color: white;
 }

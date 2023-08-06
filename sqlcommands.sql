@@ -7,12 +7,15 @@ CREATE TABLE IF NOT EXISTS tutors(
     username VARCHAR(255) NOT NULL,
     name VARCHAR(255) NOT NULL,
     description VARCHAR(2048) NOT NULL,
+    contactInformation VARCHAR(255) NOT NULL,
     cost INT NOT NULL,
-    educationLevel VARCHAR(255) NOT NULL,
     PRIMARY KEY(id),
     UNIQUE(id),
     UNIQUE(username)
 );
+ALTER TABLE tutors
+ADD COLUMN contactInformation VARCHAR(255) NOT NULL;
+ALTER TABLE tutors DROP COLUMN educationLevel;
 CREATE TABLE IF NOT EXISTS tutorsSubjects(
     id INT NOT NULL auto_increment,
     tutorId INT NOT NULL,
@@ -30,7 +33,9 @@ CREATE TABLE IF NOT EXISTS tutorsYears(
     FOREIGN KEY(tutorId) REFERENCES tutors(id) ON DELETE CASCADE
 );
 DROP TABLE tutorsSubjects;
+UPDATE tutors SET contactInformation = "";
 SELECT * FROM tutors;
+UPDATE tutors SET contactInformation = '' WHERE password = 123;
 DELETE FROM tutors WHERE username = "BobsAccount";
 INSERT INTO tutors(password, username, name, description, cost, educationLevel) VALUES('123', 'JanesAccount', 'Jane', 'I am a good tutor', 0, 'educationLevel');
 INSERT INTO tutorsSubjects(tutorId, subject) VALUES(1, 'Maths');
