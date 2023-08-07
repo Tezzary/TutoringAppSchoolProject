@@ -113,8 +113,6 @@ function SearchPage({searchSubmit, enterLogIn, validSubjects, validYears}){
     <div className='SearchPage'>
       <div className='Flex Column'>
         <div className='Flex'>
-          
-          {/*<img src={photoOfMe} className="PhotoOfMe" alt="photoOfMe" />*/}
         </div>
         <LogoDisplay />
         <h2>Star Tutors Is The Fastest And Easiest Way to Find Quality and Experienced Tutors For<br></br> Primary and High School Aged Students In All Subjects</h2>
@@ -135,7 +133,7 @@ function SearchPage({searchSubmit, enterLogIn, validSubjects, validYears}){
           </button>
         </form>
       </div> 
-      <button onClick={enterLogIn} className='LogInPageButton'>Log In</button>
+      <button onClick={enterLogIn} className='LogInPageButton'>Log In As Tutor</button>
     </div>
     
   )
@@ -150,7 +148,7 @@ function convertToBase64(file){
   });
 }
 function EditProfilePage({username, validYears, validSubjects}){
-  const [accountData, setAccountData] = useState({imageUrl: "", name: "", years: [], subjects: [], cost: 0, description: ""})
+  const [accountData, setAccountData] = useState({imageUrl: "", name: "", years: [], subjects: [], cost: 0, description: "", contactInformation: ""})
   function readURL(event) {
     if(event.target.files && event.target.files[0]){
       var reader = new FileReader();
@@ -168,8 +166,13 @@ function EditProfilePage({username, validYears, validSubjects}){
     event.preventDefault()
     let name = event.target.elements.name.value
     let cost = event.target.elements.cost.value
+    if(isNaN(cost)){
+      cost = 0
+    }
     let description = event.target.elements.description.value
     let contactInformation = event.target.elements.contactInformation.value
+    console.log(typeof contactInformation)
+    console.log(contactInformation)
     let tempYears = event.target.elements.years
     let years = []
     for(let i = 0; i < tempYears.length; i++){
@@ -194,7 +197,7 @@ function EditProfilePage({username, validYears, validSubjects}){
         'Content-Type': 'application/json',
 
       },
-      body: JSON.stringify({token: window.localStorage.getItem("token"), name, years, cost, subjects, description, image})
+      body: JSON.stringify({token: window.localStorage.getItem("token"), name, years, cost, subjects, contactInformation, description, image})
     })
     let data = await response.json()
     console.log(data)
@@ -279,7 +282,7 @@ function OptionsPage({backToSearch, validTutors, fullProfileView}){
         {validTutors.map(tutor => {
           return (
             <Fragment>
-              <div style={{display: "flex", padding: "10px", height: "150px", width: "600px"}} onClick={() => fullProfileView(tutor)}>
+              <div className='OptionsPageOption' onClick={() => fullProfileView(tutor)}>
                 <img className='ProfilePicture' src={"http://localhost:8000/profilepictures/" + tutor.id + ".png"}></img>
                 <div style={{textAlign: 'left', marginLeft: "10px"}}>
                   <h3>Name: {tutor.name}</h3>
@@ -295,7 +298,7 @@ function OptionsPage({backToSearch, validTutors, fullProfileView}){
             
           )
         })}
-        <button onClick={backToSearch} className='BackButton'><FaArrowLeft/>Back</button>
+        <button onClick={backToSearch} className='BackButton'>Back</button>
       </div>
     </div>
   )

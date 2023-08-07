@@ -165,6 +165,7 @@ app.post("/editProfile", (req, res) => {
     let years = req.body.years
     let subjects = req.body.subjects
     let imageBase64 = req.body.image
+    let contactInformation = req.body.contactInformation
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
         if (err){
           res.json({success: false, message: "Invalid token"})
@@ -192,7 +193,7 @@ app.post("/editProfile", (req, res) => {
             catch(err) {
                 console.log(err)
             }
-            dbConnection.query(`UPDATE tutors SET name = '${name}', description = '${description}', cost = ${cost} WHERE id = '${tutorId}'`, (error, results) => {
+            dbConnection.query(`UPDATE tutors SET name = '${name}', description = '${description}', cost = ${cost}, contactInformation = '${contactInformation}' WHERE id = '${tutorId}'`, (error, results) => {
                 if (error){
                     console.log(error)
                     res.json({success: false, message: "Server Error"})
@@ -283,7 +284,7 @@ app.get("/api/getProfileData/:username", (req, res) => {
 })
 
 const tutorsQuery = `
-SELECT tutors.id, tutors.username, tutors.name, tutors.description, tutors.cost, tutor.contactInformation, GROUP_CONCAT(DISTINCT tutorsYears.year SEPARATOR ',') as years, GROUP_CONCAT(DISTINCT tutorsSubjects.subject SEPARATOR ',') AS subjects
+SELECT tutors.id, tutors.username, tutors.name, tutors.description, tutors.cost, tutors.contactInformation, GROUP_CONCAT(DISTINCT tutorsYears.year SEPARATOR ',') as years, GROUP_CONCAT(DISTINCT tutorsSubjects.subject SEPARATOR ',') AS subjects
 FROM tutors
 LEFT JOIN tutorsSubjects ON tutors.id = tutorsSubjects.tutorId
 LEFT JOIN tutorsYears ON tutors.id = tutorsYears.tutorId

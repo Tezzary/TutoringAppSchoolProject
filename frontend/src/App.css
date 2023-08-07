@@ -31,6 +31,24 @@ html, body {
   justify-content: center;
   text-align: center;
 }
+.OptionsPageOption {
+
+  display: flex;
+  padding: 10px;
+  height: 150px;
+  width: 600px;
+  background-color: var(--secondarySiteColour);
+  color: white;
+  border-radius: 10px;
+  overflow: hidden;
+
+}
+.OptionsPageOption:hover {
+  background-color: var(--lightSiteColour);
+}
+.OptionsPageOption:active {
+  background-color: var(--darkSiteColour);
+}
 .LogInPage{
   height: 100vh;
   display: flex;
@@ -123,17 +141,17 @@ h3 {
   width: 100px;
   height: 50px;
   border-radius: 20px;
-  background-color: var(--lightSiteColour);
+  background-color: var(--orangeColour);
   border: 0;
 }
 .LogInPageButton{
   position: absolute;
   top: 10px;
   right: 10px;
-  width: 100px;
+  width: 120px;
   height: 50px;
   border-radius: 20px;
-  background-color: var(--lightSiteColour);
+  background-color: var(--orangeColour);
   border: 0;
 }
 .EditProfileForm{
