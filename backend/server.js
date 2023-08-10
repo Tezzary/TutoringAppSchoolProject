@@ -1,3 +1,4 @@
+//backend library imports
 const cors = require('cors')
 const accounts = require('./accounts.js')
 const mysql = require("mysql2")
@@ -9,10 +10,10 @@ const bodyParser = require('body-parser')
 const fs = require('fs');
 const multer = require('multer');
 
-const upload = multer({ dest: 'public/profilepictures' });
-
+//dotenv allows us to use environment variables not too useful in this project but good to have if ever became production project and needed to hide sensitive information
 dotenv.config()
 
+//dbconfig is the configuration for the mysql database allowing us to be verified and connect to it
 const dbConfig = {
     host: "db",
     port: 3306,
@@ -20,7 +21,10 @@ const dbConfig = {
     password: process.env.MYSQL_PASSWORD,
     database: "tutorapp",
   };
+//key variable dbConnection is used to query the database
 let dbConnection
+
+//function to connect to database and handle reconnecting if connection is lost, sets the dbConnection variable and uses the dbConfig variable to connect
 function ConnectToDB(){
   console.log("Connecting To DB")
   dbConnection = mysql.createConnection(dbConfig)
@@ -36,7 +40,7 @@ function ConnectToDB(){
 }
 ConnectToDB()
 
-//starting up server on port given
+//starting up the server on port 8000 to listen to http requests
 const port = 8000;
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
@@ -46,21 +50,28 @@ const corsOptions = {
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 
+//different middleware used to parse the requests and serve static files
 app.use(cors(corsOptions))
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 app.use(express.static('public'))
 
+//tutors array gets updated automatically and is used to store all the tutors in the database to be sent to the frontend upon request
 let tutors = []
 
+//search route called from frontend to search for tutors based on selected year and subject
 app.get('/api/search', (req, res) => {
+    //gather sent information from request
     let selectedYear = req.query.selectedYear
     let selectedSubject = req.query.selectedSubject
+    //create array to store valid tutors
     let validTutors = []
+    //linear search over all tutors and insert into validTutors if they fit frontends filter inputs
     for(let i = 0; i < tutors.length; i++){
         let validYear = false
         let validSubject = false
+        //linear search over years tutored of tutor to see if they match the selected year
         if(tutors[i].years){
             for(let j = 0; j < tutors[i].years.length; j++){
                 if(tutors[i].years[j] === selectedYear){
@@ -69,6 +80,7 @@ app.get('/api/search', (req, res) => {
                 }
             }
         }
+        //linear search over subjects tutored of tutor to see if they match the selected subject
         if(tutors[i].subjects){
             for(let j = 0; j < tutors[i].subjects.length; j++){
                 if(tutors[i].subjects[j] === selectedSubject){
@@ -77,16 +89,22 @@ app.get('/api/search', (req, res) => {
                 }
             }
         }
+        //if tutor matches both selected year and subject then they pass all filters and are added to validTutors
         if(validYear && validSubject){
             validTutors.push(tutors[i])
         }
     }
+    //send validTutors back to frontend
     res.send({validTutors})
 })
+//login route called from frontend to attempt to log in to account as tutor
 app.post("/login", (req, res) => {
+    //gather sent information from request
     let username = req.body.username
     let password = req.body.password
+    //query database to see if tutor with username and password exists
     dbConnection.query(`SELECT * FROM tutors WHERE username = '${username}' AND password = '${password}'`, (error, results) => {
+        //check for errors/invalid username or password
         if(error){
             console.log(error)
             res.json({success: false, message: "Server Error"})
@@ -97,18 +115,19 @@ app.post("/login", (req, res) => {
             res.json({success: false, message: "Invalid username or password"})
             return
         }
-        console.log("success")
+        //if tutor exists then create a token for them to be used to access the account as they are verified
         let token = jwt.sign({username}, process.env.ACCESS_TOKEN_SECRET)
         res.json({success: true, token})
     })
-    //let response = accounts.login(dbConnection, username, password)
-    //res.send(response)
 })
 app.post("/register", (req, res) => {
+    //gather sent information from request
     let username = req.body.username
     let password = req.body.password
 
+    //query database to see if tutor with username already exists
     dbConnection.query(`SELECT * FROM tutors WHERE username = '${username}'`, (error, results) => {
+        //check for errors/invalid username or password
         if(error){
             console.log(error)
             res.json({success: false, message: "Server Error"})
@@ -119,6 +138,7 @@ app.post("/register", (req, res) => {
             res.json({success: false, message: "Username taken"})
             return
         }
+        //if tutor does not exist then create a new tutor with the username and password given by frontend
         dbConnection.query(`INSERT INTO tutors (username, password, name, description, cost, contactInformation) VALUES ('${username}', '${password}', '${username}', 'Hi my name is ${username} and I am a tutor!', 0, '')`, (error, results) => {
 
             if(error){
@@ -126,7 +146,7 @@ app.post("/register", (req, res) => {
                 res.json({success: false, message: "Server Error"})
                 return
             }
-            console.log("success")
+            //if tutor is created successfully then we need to grab their id and create a token for them to be used to access the account and give them a default profile picture
             dbConnection.query(`SELECT * FROM tutors WHERE username = '${username}'`, (error, results) => {
                 if(error){
                     console.log(error)
@@ -139,17 +159,23 @@ app.post("/register", (req, res) => {
                     return
                 }
                 let tutorId = results[0].id
+                /*
+                We now know the new tutors id and can use it to upload a profile picture for them
+                copying default profile picture to new tutor's profile picture at the given id
+                'public/profilepictures/0.png' contains the default profile picture that needs to be copied
+                */
                 try {
-                    //grab the base profile picture at profilepictures/0.png and copy it to the new tutor's profile picture
+                    //grab the default profile picture at profilepictures/0.png and copy it to the new tutor's id png file
                     fs.copyFile('public/profilepictures/0.png', `public/profilepictures/${tutorId}.png`, (err) => {
                         if (err) throw err;
                         console.log('source.txt was copied to destination.txt');
                     });
+                    //create a token for the new tutor to be used to access the account as they are verified as they just registered
                     let token = jwt.sign({username}, process.env.ACCESS_TOKEN_SECRET)
                     res.json({success: true, token})
                 }
                 catch(err) {
-                    console.log(err)
+                    //any errors create an access token anyway as they were already verified earlier
                     let token = jwt.sign({username}, process.env.ACCESS_TOKEN_SECRET)
                     res.json({success: true, token})
                 }
@@ -157,7 +183,9 @@ app.post("/register", (req, res) => {
         })
     })
 })
+//route called from frontend to submit a tutors new updated profile
 app.post("/editProfile", (req, res) => {
+    //gather sent information from request
     let token = req.body.token
     let name = req.body.name
     let description = req.body.description
@@ -166,12 +194,15 @@ app.post("/editProfile", (req, res) => {
     let subjects = req.body.subjects
     let imageBase64 = req.body.image
     let contactInformation = req.body.contactInformation
+
+    //verify token to make sure user is logged in and has a valid token
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
         if (err){
           res.json({success: false, message: "Invalid token"})
           return
         }
         let username = user.username
+        //once verified we need to grab the tutor's id from the database for updating their profile
         dbConnection.query(`SELECT * FROM tutors WHERE username = '${username}'`, (error, results) => {
             if(error){
                 console.log(error)
@@ -193,19 +224,20 @@ app.post("/editProfile", (req, res) => {
             catch(err) {
                 console.log(err)
             }
+            //set basic information for tutor, strings, and ints more complex data types are handled later
             dbConnection.query(`UPDATE tutors SET name = '${name}', description = '${description}', cost = ${cost}, contactInformation = '${contactInformation}' WHERE id = '${tutorId}'`, (error, results) => {
                 if (error){
                     console.log(error)
                     res.json({success: false, message: "Server Error"})
                     return
                 }
+                //update years for tutor by first deleting all years for tutor and then adding the new years after
                 dbConnection.query(`DELETE FROM tutorsYears WHERE tutorId = '${tutorId}'`, (error, results) => {
                     if (error){
                         console.log(error)
                         res.json({success: false, message: "Server Error"})
                         return
                     }
-                    console.log(years)
                     for(let i = 0; i < years.length; i++){
                         dbConnection.query(`INSERT INTO tutorsYears (tutorId, year) VALUES ('${tutorId}', '${years[i]}')`, (error, results) => {
                             if (error){
@@ -216,6 +248,7 @@ app.post("/editProfile", (req, res) => {
                         })
                     }
                 })
+                //update subjects for tutor by first deleting all subjects for tutor and then adding the new subjects after
                 dbConnection.query(`DELETE FROM tutorsSubjects WHERE tutorId = '${tutorId}'`, (error, results) => {
                     if (error){
                         console.log(error)
@@ -232,15 +265,20 @@ app.post("/editProfile", (req, res) => {
                         })
                     }
                 })
+                //send success message to frontend to confirm profile was updated
                 res.json({success: true, message: "Profile updated"})
                 return
             })
         })
     })
 })
+//route called from frontend to get a specific tutor's profile data
 app.get("/api/getProfileData/:username", (req, res) => {
+    //grab username from request
     let username = req.params.username
+    //grab tutor's information from database
     dbConnection.query(`SELECT * FROM tutors WHERE username = '${username}'`, (error, results) => {
+        //if error send error message to frontend
         if(error){
             console.log(error)
             res.json({success: false, message: "Server Error"})
@@ -251,12 +289,14 @@ app.get("/api/getProfileData/:username", (req, res) => {
             res.json({success: false, message: "Invalid username"})
             return
         }
+        //grab basic information from tutor
         let tutorId = results[0].id
         let name = results[0].name
         let description = results[0].description
         let cost = results[0].cost
         let contactInformation = results[0].contactInformation
 
+        //grab years and subjects for tutor this requires two seperate queries as they are stored in seperate tables
         dbConnection.query(`SELECT * FROM tutorsYears WHERE tutorId = '${tutorId}'`, (error, results) => {
             if(error){
                 console.log(error)
@@ -264,6 +304,7 @@ app.get("/api/getProfileData/:username", (req, res) => {
                 return
             }
             let years = []
+            //linear search through results to grab all years
             for(let i = 0; i < results.length; i++){
                 years.push(results[i].year)
             }
@@ -274,6 +315,7 @@ app.get("/api/getProfileData/:username", (req, res) => {
                     return
                 }
                 let subjects = []
+                //linear search through results to grab all subjects
                 for(let i = 0; i < results.length; i++){
                     subjects.push(results[i].subject)
                 }
@@ -283,6 +325,7 @@ app.get("/api/getProfileData/:username", (req, res) => {
     })
 })
 
+//tutors query to get all tutors and their information, this combines the tutors table with the tutorsYears and tutorsSubjects tables to get all the information needed, in a much more manageable format
 const tutorsQuery = `
 SELECT tutors.id, tutors.username, tutors.name, tutors.description, tutors.cost, tutors.contactInformation, GROUP_CONCAT(DISTINCT tutorsYears.year SEPARATOR ',') as years, GROUP_CONCAT(DISTINCT tutorsSubjects.subject SEPARATOR ',') AS subjects
 FROM tutors
@@ -290,6 +333,7 @@ LEFT JOIN tutorsSubjects ON tutors.id = tutorsSubjects.tutorId
 LEFT JOIN tutorsYears ON tutors.id = tutorsYears.tutorId
 GROUP BY tutors.id, tutors.name;
 `
+//tutors array to store all tutors, this is updated every 5 seconds to ensure that the array is always up to date upon userbase becoming larger this will need to have a longer interval
 function updateTutors(){
     //Creating temporary tutor array to avoid tutor array being empty while query happens, causing other queries to think no one is signed up
     let tempTutors = []
@@ -298,8 +342,9 @@ function updateTutors(){
             console.log(error)
             return
         }
+        //linear search through results to grab all tutors to add to tempTutors
         for(let i = 0; i < results.length; i++){
-            //query returns the years and subjects as a string separated by commas, so we split them into arrays
+            //query returns the years and subjects as a string separated by commas, so we split them into arrays for ease of use in future
             if(results[i].years){
                 results[i].years = results[i].years.split(",")
             }
@@ -308,11 +353,12 @@ function updateTutors(){
             }
             tempTutors.push(results[i])
         }
+        //once tempTutors array is complete we set tutors array to tempTutors
         tutors = tempTutors
     })
 }
 
-//automatically update tutors every 5 seconds
+//automatically update tutors every 5 seconds as stated above upon database becoming larger this will need to have a longer interval
 setInterval(() => {
     updateTutors()
 }, 5000);

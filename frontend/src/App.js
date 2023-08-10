@@ -1,7 +1,7 @@
 import logo from './logo.png';
-import photoOfMe from './me.png';
 import { Fragment, useEffect, useState } from 'react';
 import { FaSearch, FaArrowLeft } from 'react-icons/fa';
+import { convertToBase64 } from './Utils';
 import './App.css';
 
 function App() {
@@ -107,7 +107,7 @@ function LogoDisplay(){
     </div>
   )
 }
-//Search page to 
+//Search page function displays the search page and search bar
 function SearchPage({searchSubmit, enterLogIn, validSubjects, validYears}){
   return (
     <div className='SearchPage'>
@@ -139,16 +139,12 @@ function SearchPage({searchSubmit, enterLogIn, validSubjects, validYears}){
   )
 }
 
-function convertToBase64(file){
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result.replace(/^data:.+;base64,/, ''));
-    reader.onerror = error => reject(error);
-  });
-}
+//Edit profile page function displays the edit profile page and form for submitting changes to the tutors profile
 function EditProfilePage({username, validYears, validSubjects}){
+  //state to store the tutors account data set some empty data to stop app crashes
   const [accountData, setAccountData] = useState({imageUrl: "", name: "", years: [], subjects: [], cost: 0, description: "", contactInformation: ""})
+
+  //function to handle the form being submitted and send the data to the server
   function readURL(event) {
     if(event.target.files && event.target.files[0]){
       var reader = new FileReader();
@@ -162,8 +158,11 @@ function EditProfilePage({username, validYears, validSubjects}){
       reader.readAsDataURL(event.target.files[0]);
     }
   }
+  //function to handle the form being submitted and send the data to the server
   async function submitChanges(event){
     event.preventDefault()
+
+    //get the data from the form and do any necessary validation
     let name = event.target.elements.name.value
     let cost = event.target.elements.cost.value
     if(isNaN(cost)){
@@ -171,26 +170,29 @@ function EditProfilePage({username, validYears, validSubjects}){
     }
     let description = event.target.elements.description.value
     let contactInformation = event.target.elements.contactInformation.value
-    console.log(typeof contactInformation)
-    console.log(contactInformation)
     let tempYears = event.target.elements.years
     let years = []
+    let tempSubjects = event.target.elements.subjects
+    let subjects = []
+
+    //linear search through the years checkboxes to find which ones are checked and add them to the years array
     for(let i = 0; i < tempYears.length; i++){
       if(tempYears[i].checked){
         years.push(tempYears[i].value)
       }
     }
-    let tempSubjects = event.target.elements.subjects
-    let subjects = []
+    //linear search through the subjects checkboxes to find which ones are checked and add them to the subjects array
     for(let i = 0; i < tempSubjects.length; i++){
       if(tempSubjects[i].checked){
         subjects.push(tempSubjects[i].value)
       }
     }
+    //converts image to base64 as this is format the server needs it in
     let image = event.target.elements.image.files[0]
     if(image){
       image = await convertToBase64(image)
     }
+    //send the data to the server
     let response = await fetch(`http://localhost:8000/editProfile`, {
       method: 'POST',
       headers: {
@@ -200,28 +202,31 @@ function EditProfilePage({username, validYears, validSubjects}){
       body: JSON.stringify({token: window.localStorage.getItem("token"), name, years, cost, subjects, contactInformation, description, image})
     })
     let data = await response.json()
-    console.log(data)
   }
+  //function that is called on page load to get the tutors current account data
   function getStartingData(){
     console.log(username)
     fetch(`http://localhost:8000/api/getProfileData/${username}`)
     .then(response => response.json())
     .then(data => {
-      console.log(data.cost)
-      console.log(typeof(data.cost))
       setAccountData(data)
     })
   }
-  //some sort of bug with react where you cant set default value of number input so this work around is needed to update the cost field using value instead of defaultValue
+  /*
+  some sort of bug with react where you cant set default value of number input so this work around is needed to update the cost field using value instead of defaultValue
+  this function is called when cost is updated and this is the workaround I found
+  */
   function costUpdated(event){
     let tempAccountData = {...accountData}
     tempAccountData.cost = event.target.value
     setAccountData(tempAccountData)
   }
+  //function called on page load that calls the getStartingData function as you cant have async code in useEffect
   useEffect(() => {
     getStartingData()
   }, [])
 
+  //return the html for the page
   return (
     <div className='EditProfilePage'>
       <div>
@@ -273,7 +278,9 @@ function EditProfilePage({username, validYears, validSubjects}){
     </div>
   )
 }
+//Options page functon that handles the display of the tutor options page by taking in the valid tutors and the function to go back to the search page
 function OptionsPage({backToSearch, validTutors, fullProfileView}){
+  //return the html for the page
   return (
     <div className='OptionsPage Column'>
       < LogoDisplay />
@@ -294,8 +301,6 @@ function OptionsPage({backToSearch, validTutors, fullProfileView}){
               </div>
               <hr></hr>
             </Fragment>
-            
-            
           )
         })}
         <button onClick={backToSearch} className='BackButton'>Back</button>
@@ -303,8 +308,9 @@ function OptionsPage({backToSearch, validTutors, fullProfileView}){
     </div>
   )
 }
+//Log in page function that handles the display of the log in page by returning the html for the page
 function LogInPage({backToSearch, submitLogIn, registering, setRegistering}){
-
+  //return the html for the page
   return (
     <div className='LogInPage Column Flex'>
       < LogoDisplay />
@@ -322,6 +328,7 @@ function LogInPage({backToSearch, submitLogIn, registering, setRegistering}){
     </div>
   )
 }
+//Error page function that handles the display of the error page that pops up on log in error etc
 function ErrorPage({errorMessage, disableErrorPage}){
   return (
     <div className='ErrorPage'>
@@ -333,22 +340,28 @@ function ErrorPage({errorMessage, disableErrorPage}){
     </div>
   )
 }
+//Full profile view page function that handles the display of the full profile view page by returning the html for the page
 function FullProfileView({backToSearch, tutor}){
+  //return the html for the page
   return (
     <div className='FullProfileView'>
       <div className='Flex Column'>
-        <h1>{tutor.name}</h1>
-        <img className='ProfilePicture' src={"http://localhost:8000/profilepictures/" + tutor.id + ".png"}></img>
-        <h3>Years Tutored: {tutor.years.map((year, index) => {
-          return (`${year}${index != tutor.years.length - 1 ? ", " : ""}`)
-        })}</h3>
-        <h3>Subjects Tutored: {tutor.subjects.map((subject, index) => {
-          return (`${subject}${index != tutor.subjects.length - 1 ? ", " : ""}`)
-        })}</h3>
-        <h3>Cost: ${tutor.cost}</h3>
-        <h3>Contact Information: {tutor.contactInformation}</h3>
-        <p>{tutor.description}</p>
-        <button onClick={backToSearch} className='BackButton'>Back</button>
+        <LogoDisplay />
+        <div className='Flex Column Background'>
+          <h2>{tutor.name}</h2>
+          <img className='ProfilePicture' src={"http://localhost:8000/profilepictures/" + tutor.id + ".png"}></img>
+          <h3>Years Tutored: {tutor.years.map((year, index) => {
+            return (`${year}${index != tutor.years.length - 1 ? ", " : ""}`)
+          })}</h3>
+          <h3>Subjects Tutored: {tutor.subjects.map((subject, index) => {
+            return (`${subject}${index != tutor.subjects.length - 1 ? ", " : ""}`)
+          })}</h3>
+          <h3>Cost: ${tutor.cost}</h3>
+          <h3>Contact Information: {tutor.contactInformation}</h3>
+          <p>{tutor.description}</p>
+          <button onClick={backToSearch} className='BackButton'>Back</button>
+        </div>
+        
       </div>
     </div>
   )

@@ -54,6 +54,7 @@ html, body {
   display: flex;
   justify-content: center;
   text-align: center;
+  
 }
 .ErrorPage {
   height: 100vh;
@@ -184,7 +185,8 @@ h3 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: var(--secondaryLightColour);
+  background-color: var(--secondarySiteColour);
+  color: white;
   border-radius: 20px;
   padding: 10px;
 }
@@ -200,7 +202,7 @@ h3 {
 
 .LoginForm > button:first-of-type {
   font-size: 24px;
-  background-color: var(--secondarySiteColour);
+  background-color: var(--orangeColour);
   border: 3px solid black;
 }
 
@@ -252,6 +254,12 @@ hr {
   background-color: var(--orangeColour);
 }
 .EditProfileParent {
+  background-color: var(--secondarySiteColour);
+  padding: 10px;
+  border-radius: 35px;
+  color: white;
+}
+.Background {
   background-color: var(--secondarySiteColour);
   padding: 10px;
   border-radius: 35px;
