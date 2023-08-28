@@ -18,6 +18,7 @@ function App() {
   const [activePage, setActivePage] = useState(validPages.searchPage)
   const [validTutors, setValidTutors] = useState([])
   const [errorMessage, setErrorMessage] = useState("")
+  const [successMessage, setSuccessMessage] = useState("")
   const [username, setUserName] = useState("")
   const [validSubjects, setValidSubjects] = useState([])
   const [validYears, setValidYears] = useState([])
@@ -90,9 +91,10 @@ function App() {
       {activePage == validPages.searchPage ? < SearchPage searchSubmit={searchSubmit} enterLogIn={enterLogIn} validSubjects={validSubjects} validYears={validYears}/> : null}
       {activePage == validPages.optionsPage ? < OptionsPage backToSearch={backToSearch} validTutors={validTutors} fullProfileView={fullProfileView}/> : null}
       {activePage == validPages.logInPage ? < LogInPage backToSearch={backToSearch} submitLogIn={submitLogIn} registering={registering} setRegistering={setRegistering}/> : null}
-      {activePage == validPages.editProfilePage ? < EditProfilePage username={username} validSubjects={validSubjects} validYears={validYears}/> : null}
+      {activePage == validPages.editProfilePage ? < EditProfilePage username={username} validSubjects={validSubjects} validYears={validYears} setErrorMessage={setErrorMessage} backToSearch={backToSearch} setSuccessMessage={setSuccessMessage}/> : null}
       {activePage == validPages.fullProfileView ? < FullProfileView backToSearch={backToSearch} tutor={selectedTutor}/> : null}
       {errorMessage != "" ? <ErrorPage errorMessage={errorMessage} disableErrorPage={() => setErrorMessage("")}/> : null}
+      {successMessage != "" ? <SuccessPage successMessage={successMessage} disableSuccessPage={() => setSuccessMessage("")}/> : null}
     </div>
   )
 }
@@ -140,7 +142,7 @@ function SearchPage({searchSubmit, enterLogIn, validSubjects, validYears}){
 }
 
 //Edit profile page function displays the edit profile page and form for submitting changes to the tutors profile
-function EditProfilePage({username, validYears, validSubjects}){
+function EditProfilePage({username, validYears, validSubjects, setErrorMessage, backToSearch, setSuccessMessage}){
   //state to store the tutors account data set some empty data to stop app crashes
   const [accountData, setAccountData] = useState({imageUrl: "", name: "", years: [], subjects: [], cost: 0, description: "", contactInformation: ""})
 
@@ -202,6 +204,13 @@ function EditProfilePage({username, validYears, validSubjects}){
       body: JSON.stringify({token: window.localStorage.getItem("token"), name, years, cost, subjects, contactInformation, description, image})
     })
     let data = await response.json()
+    if(!data.success){
+      setErrorMessage(data.message)
+      return
+    }
+    else{
+      setSuccessMessage(data.message)
+    }
   }
   //function that is called on page load to get the tutors current account data
   function getStartingData(){
@@ -271,10 +280,11 @@ function EditProfilePage({username, validYears, validSubjects}){
             
           </div>
           
-          
+          <p>May take a few seconds to apply profile changes to users</p>
           <button type="submit">Save</button>
         </form>
       </div>
+      <button onClick={backToSearch} className='BackButton'>Back</button>
     </div>
   )
 }
@@ -316,7 +326,7 @@ function LogInPage({backToSearch, submitLogIn, registering, setRegistering}){
       < LogoDisplay />
       <div style={{width: "500px"}}>
         <form onSubmit={submitLogIn} className='LoginForm'>
-          <h2>Log In</h2>
+          <h2>{registering ? "Register" : "Log In"}</h2>
           <input type='text' placeholder='Username' name='username'></input>
           <input type='password' placeholder='Password' name='password'></input>
           <button type="submit">{registering ? "Register" : "Log In"}</button>
@@ -331,11 +341,23 @@ function LogInPage({backToSearch, submitLogIn, registering, setRegistering}){
 //Error page function that handles the display of the error page that pops up on log in error etc
 function ErrorPage({errorMessage, disableErrorPage}){
   return (
-    <div className='ErrorPage'>
+    <div className='PopUpPage'>
       <div>
         <h1>Error</h1>
         <p>{errorMessage}</p>
         <button onClick={disableErrorPage}>Back</button>
+      </div>
+    </div>
+  )
+}
+//Success page function that handles the display of the success page that pops up on edit profile success
+function SuccessPage({successMessage, disableSuccessPage}){
+  return (
+    <div className='PopUpPage'>
+      <div>
+        <h1>Success</h1>
+        <p>{successMessage}</p>
+        <button onClick={disableSuccessPage}>Back</button>
       </div>
     </div>
   )

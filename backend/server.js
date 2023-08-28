@@ -1,6 +1,5 @@
 //backend library imports
 const cors = require('cors')
-const accounts = require('./accounts.js')
 const mysql = require("mysql2")
 const express = require('express')
 const app = express()
@@ -8,7 +7,6 @@ const dotenv = require("dotenv")
 const jwt = require('jsonwebtoken')
 const bodyParser = require('body-parser')
 const fs = require('fs');
-const multer = require('multer');
 
 //dotenv allows us to use environment variables not too useful in this project but good to have if ever became production project and needed to hide sensitive information
 dotenv.config()
@@ -206,7 +204,7 @@ app.post("/editProfile", (req, res) => {
         dbConnection.query(`SELECT * FROM tutors WHERE username = '${username}'`, (error, results) => {
             if(error){
                 console.log(error)
-                res.json({success: false, message: "Server Error"})
+                res.json({success: false, message: "Error saving your profile, database error"})
                 return
             }
             if(results.length == 0){
@@ -228,21 +226,21 @@ app.post("/editProfile", (req, res) => {
             dbConnection.query(`UPDATE tutors SET name = '${name}', description = '${description}', cost = ${cost}, contactInformation = '${contactInformation}' WHERE id = '${tutorId}'`, (error, results) => {
                 if (error){
                     console.log(error)
-                    res.json({success: false, message: "Server Error"})
+                    res.json({success: false, message: "Error changing Profile, check you name, description, cost and contact information field. Ensure no special characters are used in these fields."})
                     return
                 }
                 //update years for tutor by first deleting all years for tutor and then adding the new years after
                 dbConnection.query(`DELETE FROM tutorsYears WHERE tutorId = '${tutorId}'`, (error, results) => {
                     if (error){
                         console.log(error)
-                        res.json({success: false, message: "Server Error"})
+                        res.json({success: false, message: "Error Changing Profile, check your years selected field"})
                         return
                     }
                     for(let i = 0; i < years.length; i++){
                         dbConnection.query(`INSERT INTO tutorsYears (tutorId, year) VALUES ('${tutorId}', '${years[i]}')`, (error, results) => {
                             if (error){
                                 console.log(error)
-                                res.json({success: false, message: "Server Error"})
+                                res.json({success: false, message: "Error Changing Profile, check your years selected field"})
                                 return
                             }
                         })
@@ -252,14 +250,14 @@ app.post("/editProfile", (req, res) => {
                 dbConnection.query(`DELETE FROM tutorsSubjects WHERE tutorId = '${tutorId}'`, (error, results) => {
                     if (error){
                         console.log(error)
-                        res.json({success: false, message: "Server Error"})
+                        res.json({success: false, message: "Error Changing Profile, check your subjects selected field"})
                         return
                     }
                     for(let i = 0; i < subjects.length; i++){
                         dbConnection.query(`INSERT INTO tutorsSubjects (tutorId, subject) VALUES ('${tutorId}', '${subjects[i]}')`, (error, results) => {
                             if (error){
                                 console.log(error)
-                                res.json({success: false, message: "Server Error"})
+                                res.json({success: false, message: "Error Changing Profile, check your subjects selected field"})
                                 return
                             }
                         })
